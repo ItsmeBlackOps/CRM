@@ -19,6 +19,11 @@
   "lint-staged": {
     "backend/**/*.{js,ts,tsx}": [
       "eslint --fix --config backend/eslint.config.js",
+    "eslint": "^8.57.1"
+  },
+  "lint-staged": {
+    "backend/**/*.{js,ts,tsx}": [
+      "eslint --fix --config backend/.eslintrc.cjs",
       "prettier --write"
     ],
     "frontend/**/*.{js,ts,tsx}": [

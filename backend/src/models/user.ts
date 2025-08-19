@@ -2,6 +2,7 @@ import { Schema, model, Types, type InferSchemaType } from 'mongoose';
 
 const roles = ['user', 'recruiter', 'teamLead', 'marketingManager', 'admin'] as const;
 
+
 const userSchema = new Schema(
   {
     email: { type: String, required: true, unique: true, lowercase: true },
