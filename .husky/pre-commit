@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+CHANGED=$(git diff --cached --name-only --diff-filter=ACM | tr '\n' ' ')
+if echo "$CHANGED" | grep -vqE '\.(md|mdx|txt|png|jpg|svg|gif|ico)$'; then
+  npx lint-staged
+fi

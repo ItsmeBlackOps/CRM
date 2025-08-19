@@ -12,7 +12,7 @@ interface Task {
 
 interface GanttChartProps {
   tasks?: Task[];
-  links?: any[];
+  links?: unknown[];
 }
 
 export function GanttChart({ tasks = [], links = [] }: GanttChartProps) {

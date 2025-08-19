@@ -1,0 +1,27 @@
+{
+  "name": "crm-monorepo",
+  "private": true,
+  "workspaces": ["backend", "frontend"],
+  "scripts": {
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm test --workspaces --if-present",
+    "prepare": "husky install"
+  },
+  "devDependencies": {
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.7",
+    "prettier": "^3.3.3",
+    "eslint": "^8.57.1"
+  },
+  "lint-staged": {
+    "backend/**/*.{js,ts,tsx}": [
+      "eslint --fix --config backend/.eslintrc.cjs",
+      "prettier --write"
+    ],
+    "frontend/**/*.{js,ts,tsx}": [
+      "eslint --fix --config frontend/eslint.config.js",
+      "prettier --write"
+    ],
+    "**/*.{json,css,md}": ["prettier --write"]
+  }
+}
