@@ -14,7 +14,14 @@
     "eslint": "^8.57.1"
   },
   "lint-staged": {
-    "**/*.{js,ts,tsx}": ["eslint --fix", "prettier --write"],
+    "backend/**/*.{js,ts,tsx}": [
+      "eslint --fix --config backend/.eslintrc.cjs",
+      "prettier --write"
+    ],
+    "frontend/**/*.{js,ts,tsx}": [
+      "eslint --fix --config frontend/eslint.config.js",
+      "prettier --write"
+    ],
     "**/*.{json,css,md}": ["prettier --write"]
   }
 }

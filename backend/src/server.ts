@@ -37,6 +37,9 @@ registerAuthEvents(io);
 registerTaskEvents(io);
 registerListEvents(io);
 
+const maxPayloadBytes =
+  (Number(process.env.MAX_PAYLOAD_SIZE_KB || "4") || 4) * 1024;
+
 type ErrorCode =
   | "AUTH"
   | "VALIDATION"
@@ -60,9 +63,18 @@ io.use((socket, next) => {
     return next();
   }
   try {
-    const payload: any = jwt.verify(token, process.env.JWT_SECRET as string);
+    const payload = jwt.verify(
+      token,
+      process.env.JWT_SECRET as string,
+    ) as jwt.JwtPayload & {
+      role?: string;
+      teamLeadId?: string;
+      branchId?: string;
+      departmentId?: string;
+      teamId?: string;
+    };
     socket.data.user = {
-      id: payload.sub || payload.id,
+      id: (payload.sub as string) || (payload as { id?: string }).id!,
       role: payload.role,
       teamLeadId: payload.teamLeadId,
       branchId: payload.branchId,
@@ -72,8 +84,8 @@ io.use((socket, next) => {
     joinRooms(io, socket, socket.data.user);
     next();
   } catch (e) {
-    const err = new Error("Unauthorized");
-    (err as any).data = formatError("AUTH", "Invalid token");
+    const err = new Error("Unauthorized") as Error & { data?: unknown };
+    err.data = formatError("AUTH", "Invalid token");
     next(err);
   }
 });
@@ -84,9 +96,11 @@ io.on("connection", (socket) => {
     const start = Date.now();
 
     const size = Buffer.byteLength(JSON.stringify(payload ?? {}));
-    if (size > 4 * 1024) {
-      const err = new Error("Payload too large");
-      (err as any).data = formatError("PAYLOAD_TOO_LARGE", "Payload too large");
+    if (size > maxPayloadBytes) {
+      const err = new Error("Payload too large") as Error & {
+        data?: unknown;
+      };
+      err.data = formatError("PAYLOAD_TOO_LARGE", "Payload too large");
       logger.warn({
         event,
         userId: socket.data.user?.id,

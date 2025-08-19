@@ -9,7 +9,11 @@ import { TaskModel } from "../src/models/task.js";
 import { todayUTC } from "../src/lib/dates.js";
 
 async function run() {
-  await mongoose.connect(process.env.MONGODB_URI as string);
+  const uri = process.env.MONGODB_URI;
+  if (!uri) {
+    throw new Error("MONGODB_URI not set");
+  }
+  await mongoose.connect(uri);
 
   await Promise.all([
     BranchModel.deleteMany({}),
@@ -33,8 +37,11 @@ async function run() {
   });
 
   const admin = await UserModel.create({
-    email: "admin@example.com",
-    passwordHash: await bcrypt.hash("password", 10),
+    email: process.env.SEED_ADMIN_EMAIL,
+    passwordHash: await bcrypt.hash(
+      process.env.SEED_ADMIN_PASSWORD || "password",
+      10,
+    ),
     role: "admin",
     branchId: branch._id,
     departmentId: dept._id,
@@ -42,8 +49,11 @@ async function run() {
   });
 
   const teamLead = await UserModel.create({
-    email: "lead@example.com",
-    passwordHash: await bcrypt.hash("password", 10),
+    email: process.env.SEED_TEAMLEAD_EMAIL,
+    passwordHash: await bcrypt.hash(
+      process.env.SEED_TEAMLEAD_PASSWORD || "password",
+      10,
+    ),
     role: "teamLead",
     branchId: branch._id,
     departmentId: dept._id,
@@ -51,8 +61,11 @@ async function run() {
   });
 
   await UserModel.create({
-    email: "user@example.com",
-    passwordHash: await bcrypt.hash("password", 10),
+    email: process.env.SEED_USER_EMAIL,
+    passwordHash: await bcrypt.hash(
+      process.env.SEED_USER_PASSWORD || "password",
+      10,
+    ),
     role: "user",
     branchId: branch._id,
     departmentId: dept._id,

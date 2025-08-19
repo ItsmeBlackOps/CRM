@@ -6,6 +6,7 @@ import { recordAudit } from "../lib/audit.js";
 import { countRequest, countError } from "../lib/metrics.js";
 import { UserModel } from "../models/user.js";
 import type { Server, Socket } from "socket.io";
+import { joinRooms } from "../lib/rooms.js";
 
 export const loginSchema = z.object({
   email: z
@@ -90,13 +91,14 @@ export function registerAuthEvents(io: Server) {
           process.env.JWT_SECRET as string,
           { expiresIn: "1h" },
         );
-        socket.join(`user:${user._id}`);
-        if (user.branchId) socket.join(`branch:${user.branchId}`);
-        if (user.departmentId) socket.join(`department:${user.departmentId}`);
-        if (user.teamId) socket.join(`team:${user.teamId}`);
-        if (user.teamLeadId) socket.join(`lead:${user.teamLeadId}`);
-        if (user.role === "marketingManager")
-          socket.join("role:marketingManager");
+        joinRooms(io, socket, {
+          id: user._id.toString(),
+          role: user.role,
+          branchId: user.branchId?.toString(),
+          departmentId: user.departmentId?.toString(),
+          teamId: user.teamId?.toString(),
+          teamLeadId: user.teamLeadId?.toString(),
+        });
         socket.emit("auth:ok", {
           token,
           userId: user._id.toString(),

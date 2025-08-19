@@ -49,7 +49,26 @@ export function registerListEvents(io: Server) {
         return;
       }
       try {
-        let branches = await getJson<any[]>("lists", "branches");
+        interface BranchList {
+          id: string;
+          code: string;
+          name: string;
+        }
+        interface DepartmentList {
+          id: string;
+          code: string;
+          name: string;
+          branchId?: string;
+        }
+        interface TeamList {
+          id: string;
+          code: string;
+          name: string;
+          branchId?: string;
+          departmentId?: string;
+        }
+
+        let branches = await getJson<BranchList[]>("lists", "branches");
         if (!branches) {
           const docs = await BranchModel.find().select("code name").lean();
           branches = docs.map((b) => ({
@@ -59,7 +78,7 @@ export function registerListEvents(io: Server) {
           }));
           await setJson("lists", "branches", branches, TTL);
         }
-        let departments = await getJson<any[]>("lists", "departments");
+        let departments = await getJson<DepartmentList[]>("lists", "departments");
         if (!departments) {
           const docs = await DepartmentModel.find()
             .select("code name branchId")
@@ -72,7 +91,7 @@ export function registerListEvents(io: Server) {
           }));
           await setJson("lists", "departments", departments, TTL);
         }
-        let teams = await getJson<any[]>("lists", "teams");
+        let teams = await getJson<TeamList[]>("lists", "teams");
         if (!teams) {
           const docs = await TeamModel.find()
             .select("code name branchId departmentId")
@@ -86,15 +105,14 @@ export function registerListEvents(io: Server) {
           }));
           await setJson("lists", "teams", teams, TTL);
         }
-        const departmentsByBranch = departments.reduce<Record<string, any[]>>(
-          (acc, d) => {
-            const key = d.branchId as string;
-            (acc[key] ||= []).push(d);
-            return acc;
-          },
-          {},
-        );
-        const teamsByDepartment = teams.reduce<Record<string, any[]>>(
+        const departmentsByBranch = departments.reduce<
+          Record<string, DepartmentList[]>
+        >((acc, d) => {
+          const key = d.branchId as string;
+          (acc[key] ||= []).push(d);
+          return acc;
+        }, {});
+        const teamsByDepartment = teams.reduce<Record<string, TeamList[]>>(
           (acc, t) => {
             const key = t.departmentId as string;
             (acc[key] ||= []).push(t);

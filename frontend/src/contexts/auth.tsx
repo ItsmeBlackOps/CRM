@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import socketClient, { connectSocket, emitWithAck, useSocketStatus } from '@/lib/socketClient';
+import socketClient, { connectSocket, emitAndWait, useSocketStatus } from '@/lib/socketClient';
+import { jwtDecode } from 'jwt-decode';
 import { AuthOk, ListsData } from '@/types';
 
 interface UserInfo {
@@ -30,18 +31,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     if (storedToken) {
-      setToken(storedToken);
-      const payload = JSON.parse(atob(storedToken.split('.')[1] || ''));
-      setUser({
-        userId: payload.sub || payload.id,
-        role: payload.role,
-        branchId: payload.branchId,
-        departmentId: payload.departmentId,
-        teamId: payload.teamId,
-      });
-      connectSocket(storedToken);
-    } else {
-      if (!socketClient.socket.connected) socketClient.socket.connect();
+      try {
+        setToken(storedToken);
+        const payload = jwtDecode<{ sub?: string; id?: string; role: AuthOk['role']; branchId?: string; departmentId?: string; teamId?: string }>(storedToken);
+        setUser({
+          userId: payload.sub || (payload as { id?: string }).id!,
+          role: payload.role,
+          branchId: payload.branchId,
+          departmentId: payload.departmentId,
+          teamId: payload.teamId,
+        });
+        connectSocket(storedToken);
+      } catch {
+        localStorage.removeItem('token');
+      }
+    } else if (!socketClient.socket.connected) {
+      socketClient.socket.connect();
     }
   }, []);
 
@@ -87,7 +92,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     connectSocket(res.token);
     await qc.fetchQuery({
       queryKey: ['orgLists', res.branchId, res.departmentId],
-      queryFn: () => emitWithAck<unknown, ListsData>('lists:bootstrap', {}),
+      queryFn: () =>
+        emitAndWait<unknown, ListsData>('lists:bootstrap', {}, 'lists:data'),
       staleTime: 10 * 60 * 1000,
     });
   }

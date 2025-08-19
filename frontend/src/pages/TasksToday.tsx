@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { emitWithAck } from '@/lib/socketClient';
+import { emitAndWait } from '@/lib/socketClient';
 import { Task } from '@/types';
 import { useAuth } from '@/contexts/auth';
 
@@ -11,12 +11,22 @@ export default function TasksToday() {
 
   const listQuery = useQuery({
     queryKey: ['tasksToday'],
-    queryFn: () => emitWithAck<unknown, { tasks: Task[] }>('tasks:listToday', {}).then((r) => r.tasks),
+    queryFn: () =>
+      emitAndWait<unknown, { tasks: Task[] }>(
+        'tasks:listToday',
+        {},
+        'tasks:list',
+      ).then((r) => r.tasks),
     enabled: !!user,
   });
 
   const createMutation = useMutation({
-    mutationFn: (description: string) => emitWithAck<{ description: string }, { task: Task }>('tasks:create', { description }),
+    mutationFn: (description: string) =>
+      emitAndWait<{ description: string }, { task: Task }>(
+        'tasks:create',
+        { description },
+        'tasks:created',
+      ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['tasksToday'] });
       setDesc('');

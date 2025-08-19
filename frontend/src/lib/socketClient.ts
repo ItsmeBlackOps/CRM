@@ -40,6 +40,27 @@ export function onEvent<T>(event: string, cb: (payload: T) => void) {
   socket.on(event, wrapped as (...args: unknown[]) => void);
 }
 
+export function emitAndWait<TReq, TRes>(
+  emitEvent: string,
+  payload: TReq,
+  responseEvent: string,
+  timeout = 5000,
+): Promise<TRes> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      socket.off(responseEvent, handler as (...args: unknown[]) => void);
+      reject(new Error('timeout'));
+    }, timeout);
+    const handler = (data: TRes) => {
+      clearTimeout(timer);
+      socket.off(responseEvent, handler as (...args: unknown[]) => void);
+      resolve(data);
+    };
+    socket.on(responseEvent, handler as (...args: unknown[]) => void);
+    socket.emit(emitEvent, payload);
+  });
+}
+
 socket.on('reconnect', () => {
   subscriptions.forEach((cbs, event) => {
     cbs.forEach((cb) => socket.on(event, cb));
@@ -77,4 +98,4 @@ export function useSocket() {
   return socket;
 }
 
-export default { socket, connectSocket, emitWithAck, onEvent };
+export default { socket, connectSocket, emitWithAck, onEvent, emitAndWait };
