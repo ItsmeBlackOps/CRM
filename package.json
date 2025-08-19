@@ -1,7 +1,10 @@
 {
   "name": "crm-monorepo",
   "private": true,
-  "workspaces": ["backend", "frontend"],
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
   "scripts": {
     "lint": "npm run lint --workspaces --if-present",
     "test": "npm test --workspaces --if-present",
@@ -11,6 +14,11 @@
     "husky": "^9.0.11",
     "lint-staged": "^15.2.7",
     "prettier": "^3.3.3",
+    "eslint": "^9.13.0"
+  },
+  "lint-staged": {
+    "backend/**/*.{js,ts,tsx}": [
+      "eslint --fix --config backend/eslint.config.js",
     "eslint": "^8.57.1"
   },
   "lint-staged": {
@@ -22,6 +30,8 @@
       "eslint --fix --config frontend/eslint.config.js",
       "prettier --write"
     ],
-    "**/*.{json,css,md}": ["prettier --write"]
+    "**/*.{json,css,md}": [
+      "prettier --write"
+    ]
   }
 }
