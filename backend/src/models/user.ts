@@ -1,6 +1,6 @@
 import { Schema, model, Types, type InferSchemaType } from 'mongoose';
 
-const roles = ['user', 'recruiter', 'teamLead', 'marketingManager'] as const;
+const roles = ['user', 'recruiter', 'teamLead', 'marketingManager', 'admin'] as const;
 
 const userSchema = new Schema(
   {
