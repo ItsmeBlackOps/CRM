@@ -15,9 +15,14 @@ import { DepartmentModel } from "./models/department.js";
 import { TeamModel } from "./models/team.js";
 import { UserModel } from "./models/user.js";
 import { TaskModel } from "./models/task.js";
+import { CandidateModel } from "./models/candidate.js";
+import { CandidateNameModel } from "./models/candidate-name.js";
+import { CompanyModel } from "./models/company.js";
 import { registerAuthEvents } from "./events/auth.js";
 import { registerTaskEvents } from "./events/tasks.js";
 import { registerListEvents } from "./events/lists.js";
+import { registerCandidateNameEvents } from "./events/candidate-names.js";
+import { registerCompanyEvents } from "./events/companies.js";
 import { cacheRedis } from "./lib/cache.js";
 
 const app = express();
@@ -36,6 +41,8 @@ io.adapter(createAdapter(pubClient, subClient));
 registerAuthEvents(io);
 registerTaskEvents(io);
 registerListEvents(io);
+registerCandidateNameEvents(io);
+registerCompanyEvents(io);
 
 const maxPayloadBytes =
   (Number(process.env.MAX_PAYLOAD_SIZE_KB || "4") || 4) * 1024;
@@ -83,7 +90,7 @@ io.use((socket, next) => {
     };
     joinRooms(io, socket, socket.data.user);
     next();
-  } catch (e) {
+  } catch {
     const err = new Error("Unauthorized") as Error & { data?: unknown };
     err.data = formatError("AUTH", "Invalid token");
     next(err);
@@ -162,6 +169,9 @@ export async function start() {
     TeamModel.init(),
     UserModel.init(),
     TaskModel.init(),
+    CandidateModel.init(),
+    CandidateNameModel.init(),
+    CompanyModel.init(),
     AuditModel.init(),
   ]);
   await new Promise<void>((resolve) => server.listen(PORT, () => resolve()));

@@ -5,6 +5,8 @@ import { countRequest, countError } from "../lib/metrics.js";
 import { BranchModel } from "../models/branch.js";
 import { DepartmentModel } from "../models/department.js";
 import { TeamModel } from "../models/team.js";
+import { CandidateNameModel } from "../models/candidate-name.js";
+import { CompanyModel } from "../models/company.js";
 import { getJson, setJson } from "../lib/cache.js";
 import type { Server, Socket } from "socket.io";
 
@@ -67,6 +69,14 @@ export function registerListEvents(io: Server) {
           branchId?: string;
           departmentId?: string;
         }
+        interface CandidateNameList {
+          id: string;
+          name: string;
+        }
+        interface CompanyList {
+          id: string;
+          name: string;
+        }
 
         let branches = await getJson<BranchList[]>("lists", "branches");
         if (!branches) {
@@ -78,7 +88,10 @@ export function registerListEvents(io: Server) {
           }));
           await setJson("lists", "branches", branches, TTL);
         }
-        let departments = await getJson<DepartmentList[]>("lists", "departments");
+        let departments = await getJson<DepartmentList[]>(
+          "lists",
+          "departments",
+        );
         if (!departments) {
           const docs = await DepartmentModel.find()
             .select("code name branchId")
@@ -105,6 +118,27 @@ export function registerListEvents(io: Server) {
           }));
           await setJson("lists", "teams", teams, TTL);
         }
+        let candidateNames = await getJson<CandidateNameList[]>(
+          "lists",
+          "candidateNames",
+        );
+        if (!candidateNames) {
+          const docs = await CandidateNameModel.find().select("name").lean();
+          candidateNames = docs.map((c) => ({
+            id: c._id.toString(),
+            name: c.name,
+          }));
+          await setJson("lists", "candidateNames", candidateNames, TTL);
+        }
+        let companies = await getJson<CompanyList[]>("lists", "companies");
+        if (!companies) {
+          const docs = await CompanyModel.find().select("name").lean();
+          companies = docs.map((c) => ({
+            id: c._id.toString(),
+            name: c.name,
+          }));
+          await setJson("lists", "companies", companies, TTL);
+        }
         const departmentsByBranch = departments.reduce<
           Record<string, DepartmentList[]>
         >((acc, d) => {
@@ -124,6 +158,8 @@ export function registerListEvents(io: Server) {
           branches,
           departmentsByBranch,
           teamsByDepartment,
+          candidateNames,
+          companies,
         });
         await recordAudit({
           event: "lists:bootstrap",
